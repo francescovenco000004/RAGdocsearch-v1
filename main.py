@@ -1,18 +1,18 @@
-# Import necessary libraries
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS
 from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 import os
 import json
-from flask import Flask, Response, request, jsonify
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 import openai
 from openai import OpenAI
-from flask_cors import CORS
-
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}})  # Allow all origins or specify as needed
 
 # Set environment variables for API keys
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or "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"
@@ -95,7 +95,7 @@ def query_endpoint():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    # for deployment
-    # to make it work for both production and development
+    # For deployment
+    # To make it work for both production and development
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
