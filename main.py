@@ -1,23 +1,27 @@
-# Import necessary libraries
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from pinecone import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
-import os
-import json
-from flask import Flask, Response, request, jsonify
 from langchain_pinecone import PineconeVectorStore
-from langchain_openai import OpenAIEmbeddings
 import openai
-from openai import OpenAI
-
+import os
 
 app = Flask(__name__)
 
+# Configure CORS
+if os.environ.get("FLASK_ENV") == "production":
+    # In production, restrict CORS to specific origins
+    CORS(app, resources={r"/api/*": {"origins": "https://your-production-domain.com"}})
+else:
+    # In development, allow CORS from any origin
+    CORS(app)
+
 # Set environment variables for API keys
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or "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"
-os.environ['PINECONE_API_KEY'] = 'c3309951-90dc-4de7-b68e-2d0db12d9247'
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or "your-openai-api-key"
+os.environ['PINECONE_API_KEY'] = os.getenv('PINECONE_API_KEY') or 'your-pinecone-api-key'
 
 # Initialize Pinecone connection
-api_key = os.getenv("PINECONE_API_KEY") or "c3309951-90dc-4de7-b68e-2d0db12d9247"
+api_key = os.getenv("PINECONE_API_KEY")
 pc = Pinecone(api_key=api_key)
 
 # Initialize embeddings and vector store
@@ -48,7 +52,7 @@ def query_endpoint():
             }
             results_json.append(result_entry)
 
-        # Example definition of augment_prompt function
+        # Define the augment_prompt function
         def augment_prompt(query: str):
             # Perform the similarity search again for generating augmented prompt
             results = vectorstore.similarity_search(query, k=3)
@@ -64,20 +68,21 @@ def query_endpoint():
         # Generate the augmented prompt
         augmented_prompt = augment_prompt(query)
 
-        client = OpenAI()
-        system = [{"role": "system", "content": "You are HappyBot."}]
-        chat_history = []  # past user and assistant turns for AI memory
-        user = [{"role": "user", "content": augmented_prompt}]
-        chat_completion = client.chat.completions.create(
-            messages=system + chat_history + user,
+        # Initialize OpenAI client
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are HappyBot."},
+                {"role": "user", "content": augmented_prompt}
+            ],
             max_tokens=1000,
             top_p=0.9,
         )
 
         # Prepare chat completion result
         chat_completion_json = {
-            "response": chat_completion.choices[0].message.content
+            "response": response.choices[0].message['content']
         }
 
         # Combine results and chat completion into a final JSON structure
@@ -95,7 +100,7 @@ def query_endpoint():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    # for deployment
-    # to make it work for both production and development
+    # Determine the port from environment variable or default to 8080
     port = int(os.environ.get("PORT", 8080))
+    # Run the Flask app
     app.run(debug=True, host='0.0.0.0', port=port)
