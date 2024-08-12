@@ -8,9 +8,11 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 import openai
 from openai import OpenAI
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 
 # Set environment variables for API keys
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or "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"
