@@ -15,11 +15,10 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})  # Allow all origins or specify as needed
 
 # Set environment variables for API keys
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or "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"
-os.environ['PINECONE_API_KEY'] = 'c3309951-90dc-4de7-b68e-2d0db12d9247'
+**
 
 # Initialize Pinecone connection
-api_key = os.getenv("PINECONE_API_KEY") or "c3309951-90dc-4de7-b68e-2d0db12d9247"
+api_key = os.getenv("PINECONE_API_KEY")
 pc = Pinecone(api_key=api_key)
 
 # Initialize embeddings and vector store
